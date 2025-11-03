@@ -1,0 +1,12 @@
+{
+  "name": "msn-messenger-chat",
+  "version": "1.0.0",
+  "description": "Chat MSN Messenger 2004 Style",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve -s ."
+  },
+  "dependencies": {
+    "serve": "^14.0.0"
+  }
+}
