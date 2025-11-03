@@ -1045,18 +1045,21 @@
 
         // NOUVELLE FONCTION : CHANGER MOT DE PASSE ADMIN
         function changeAdminPassword() {
-            if (!isAdmin) return;
-            
-            const newPassword = prompt('Nouveau mot de passe admin:');
-            if (newPassword && newPassword.length >= 4) {
-                ADMIN_CREDENTIALS.password = newPassword;
-                // Sauvegarder dans localStorage
-                localStorage.setItem('adminCredentials', JSON.stringify(ADMIN_CREDENTIALS));
-                alert('✅ Mot de passe admin changé avec succès !\nNouveau mot de passe : ' + newPassword);
-            } else if (newPassword) {
-                alert('❌ Le mot de passe doit faire au moins 4 caractères');
-            }
-        }
+    if (!isAdmin) return;
+    
+    const newPassword = prompt('Nouveau mot de passe admin:');
+    if (newPassword && newPassword.length >= 4) {
+        ADMIN_CREDENTIALS.password = newPassword;
+        // Sauvegarder dans localStorage
+        localStorage.setItem('adminCredentials', JSON.stringify(ADMIN_CREDENTIALS));
+        alert('✅ Mot de passe admin changé avec succès !\nNouveau mot de passe : ' + newPassword);
+        
+        // FORCER la mise à jour immédiate
+        saveData();
+    } else if (newPassword) {
+        alert('❌ Le mot de passe doit faire au moins 4 caractères');
+    }
+}
 
         function viewAllMessages() {
             if (!isAdmin) return;
