@@ -1,0 +1,460 @@
+// Variables globales
+let currentUser = null;
+let userColor = '#000000';
+let audioContext = null;
+let isAdmin = false;
+
+// Identifiants administrateur - MODIFIABLES
+let ADMIN_CREDENTIALS = {
+    username: "admin",
+    password: "msn2004"
+};
+
+// Stockage des données
+let chatUsers = [];
+let chatMessages = [];
+let chatSettings = {
+    name: "MSN Messenger 2004 Chat",
+    description: "Chat rétro style MSN Messenger"
+};
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    // Charger les données sauvegardées
+    loadSavedData();
+    
+    // Gestion de la connexion
+    document.getElementById('loginBtn').addEventListener('click', login);
+    document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            login();
+        }
+    });
+
+    // Gestion des couleurs
+    document.querySelectorAll('.color-option').forEach(option => {
+        option.addEventListener('click', function() {
+            userColor = this.getAttribute('data-color');
+            document.querySelectorAll('.color-option').forEach(opt => {
+                opt.style.border = '1px solid #333';
+            });
+            this.style.border = '2px solid #0066cc';
+        });
+    });
+
+    // Gestion de l'envoi de messages
+    document.getElementById('sendBtn').addEventListener('click', sendMessage);
+    document.getElementById('messageInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Gestion du Wizz
+    document.getElementById('wizzBtn').addEventListener('click', sendWizz);
+
+    // Gestion de l'administration
+    document.getElementById('adminToggle').addEventListener('click', function() {
+        document.getElementById('adminPanel').classList.add('open');
+        updateAdminPanel();
+    });
+
+    document.getElementById('closeAdmin').addEventListener('click', function() {
+        document.getElementById('adminPanel').classList.remove('open');
+    });
+
+    // Gestion de la fermeture
+    document.getElementById('closeBtn').addEventListener('click', function() {
+        document.getElementById('msnContainer').style.display = 'none';
+        document.getElementById('loginContainer').style.display = 'flex';
+        currentUser = null;
+        isAdmin = false;
+        document.getElementById('adminToggle').style.display = 'none';
+        document.getElementById('adminBadge').style.display = 'none';
+    });
+});
+
+// FONCTION DE CONNEXION SÉCURISÉE AVEC GESTION DU MOT DE PASSE
+function login() {
+    const username = document.getElementById('usernameInput').value.trim();
+    const password = document.getElementById('passwordInput').value.trim();
+    
+    // CHARGER LE MOT DE PASSE ACTUALISÉ
+    loadSavedData();
+    
+    if (username && password) {
+        // LISTE DES PSEUDOS ADMIN INTERDITS
+        const adminVariants = ['admin', 'administrateur', 'administrator', 'moderateur', 'modo', 'root', 'superuser', 'sysadmin'];
+        const isAdminVariant = adminVariants.some(variant => 
+            username.toLowerCase().includes(variant.toLowerCase())
+        );
+        
+        // BLOQUER les pseudos admin sans le bon mot de passe
+        if (isAdminVariant && !(username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password)) {
+            alert('❌ Accès refusé : Ce pseudo est réservé aux administrateurs');
+            return;
+        }
+        
+        // Vérifier si c'est le VRAI admin
+        if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+            isAdmin = true;
+            currentUser = "Administrateur";
+            document.getElementById('adminToggle').style.display = 'flex';
+            document.getElementById('adminBadge').style.display = 'inline';
+        } else {
+            isAdmin = false;
+            currentUser = username;
+            document.getElementById('adminToggle').style.display = 'none';
+            document.getElementById('adminBadge').style.display = 'none';
+            
+            // Enregistrer l'utilisateur normal
+            if (!chatUsers.find(u => u.username === username)) {
+                chatUsers.push({
+                    username: username,
+                    color: userColor,
+                    joinDate: new Date(),
+                    isBanned: false
+                });
+                saveData();
+            }
+        }
+        
+        document.getElementById('loginContainer').style.display = 'none';
+        document.getElementById('msnContainer').style.display = 'flex';
+        
+        // Ajouter un message de bienvenue
+        const messagesContainer = document.getElementById('chatMessages');
+        const now = new Date();
+        const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+        
+        const welcomeElement = document.createElement('div');
+        welcomeElement.className = 'message received';
+        welcomeElement.innerHTML = `
+            <div class="message-sender">Système <span class="message-time">${timeString}</span></div>
+            <div class="message-text">Bienvenue ${currentUser} ! ${isAdmin ? 'Vous êtes connecté en tant qu\'administrateur.' : 'Vous êtes maintenant connecté.'}</div>
+        `;
+        
+        messagesContainer.appendChild(welcomeElement);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    } else {
+        alert('Veuillez entrer un nom d\'utilisateur et un mot de passe');
+    }
+}
+
+// FONCTION CORRIGÉE POUR CHANGER LE MOT DE PASSE
+function changeAdminPassword() {
+    if (!isAdmin) return;
+    
+    const newPassword = prompt('Nouveau mot de passe admin:');
+    if (newPassword && newPassword.length >= 4) {
+        ADMIN_CREDENTIALS.password = newPassword;
+        // Sauvegarder dans localStorage
+        localStorage.setItem('adminCredentials', JSON.stringify(ADMIN_CREDENTIALS));
+        alert('✅ Mot de passe admin changé avec succès !\nNouveau mot de passe : ' + newPassword);
+        
+        // FORCER la mise à jour immédiate
+        saveData();
+    } else if (newPassword) {
+        alert('❌ Le mot de passe doit faire au moins 4 caractères');
+    }
+}
+
+// Les autres fonctions restent identiques...
+function sendMessage() {
+    if (!currentUser) return;
+    
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    
+    if (message) {
+        const messagesContainer = document.getElementById('chatMessages');
+        const now = new Date();
+        const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+        
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message sent';
+        messageElement.innerHTML = `
+            <div class="message-sender" style="color: ${isAdmin ? '#ff0000' : userColor};">${currentUser} ${isAdmin ? '<span style="color: #ff0000;">[ADMIN]</span>' : ''} <span class="message-time">${timeString}</span></div>
+            <div class="message-text" style="color: ${isAdmin ? '#ff0000' : userColor};">${message}</div>
+        `;
+        
+        messagesContainer.appendChild(messageElement);
+        
+        // Sauvegarder le message
+        chatMessages.push({
+            user: currentUser,
+            text: message,
+            time: new Date(),
+            isAdmin: isAdmin,
+            color: isAdmin ? '#ff0000' : userColor
+        });
+        saveData();
+        
+        input.value = '';
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        // Simuler une réponse après un délai
+        setTimeout(() => {
+            const responses = [
+                "Intéressant !",
+                "Je vois ce que tu veux dire.",
+                "D'accord, je note.",
+                "C'est une bonne idée !",
+                "Je ne suis pas sûr de comprendre.",
+                "Haha, c'est drôle !",
+                "Vraiment ?",
+                "Continue, je t'écoute."
+            ];
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            
+            const responseElement = document.createElement('div');
+            responseElement.className = 'message received';
+            responseElement.innerHTML = `
+                <div class="message-sender">Marie Dupont <span class="message-time">${now.getHours()}:${(now.getMinutes() + 1).toString().padStart(2, '0')}</span></div>
+                <div class="message-text">${randomResponse}</div>
+            `;
+            
+            messagesContainer.appendChild(responseElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }, 1000 + Math.random() * 2000);
+    }
+}
+
+function sendWizz() {
+    if (!currentUser) return;
+    
+    // Animation de vibration
+    document.getElementById('msnContainer').classList.add('wizz-active');
+    
+    // Son de vibration (simulé avec l'API Web Audio)
+    playWizzSound();
+    
+    // Message de Wizz
+    const messagesContainer = document.getElementById('chatMessages');
+    const now = new Date();
+    const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+    
+    const wizzElement = document.createElement('div');
+    wizzElement.className = 'message received';
+    wizzElement.innerHTML = `
+        <div class="message-sender">Système <span class="message-time">${timeString}</span></div>
+        <div class="message-text" style="font-weight: bold; color: #ff6600;">${currentUser} a envoyé un Wizz !</div>
+    `;
+    
+    messagesContainer.appendChild(wizzElement);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Retirer l'animation après la fin
+    setTimeout(() => {
+        document.getElementById('msnContainer').classList.remove('wizz-active');
+    }, 1000);
+}
+
+function playWizzSound() {
+    try {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.5);
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (e) {
+        console.log("L'API Audio n'est pas supportée");
+    }
+}
+
+// FONCTIONS D'ADMINISTRATION
+function updateAdminPanel() {
+    if (!isAdmin) return;
+    
+    // Mettre à jour la liste des utilisateurs
+    const usersList = document.getElementById('usersList');
+    usersList.innerHTML = '<h4>Utilisateurs enregistrés:</h4>';
+    
+    if (chatUsers.length === 0) {
+        usersList.innerHTML += '<p>Aucun utilisateur enregistré</p>';
+    } else {
+        chatUsers.forEach(user => {
+            usersList.innerHTML += `
+                <div style="font-size: 11px; margin: 2px 0; padding: 2px; background: ${user.isBanned ? '#ffcccc' : '#f0f0f0'}; border-radius: 3px;">
+                    ${user.username} - ${user.joinDate.toLocaleDateString()} ${user.isBanned ? '<span style="color: red;">[BANNI]</span>' : ''}
+                </div>
+            `;
+        });
+    }
+    
+    // Mettre à jour les statistiques
+    updateStats();
+    
+    // Charger les paramètres
+    document.getElementById('chatName').value = chatSettings.name;
+    document.getElementById('chatDescription').value = chatSettings.description;
+}
+
+function refreshUsers() {
+    if (!isAdmin) return;
+    updateAdminPanel();
+    alert('Liste des utilisateurs actualisée !');
+}
+
+function banUser() {
+    if (!isAdmin) return;
+    const username = prompt('Nom d\'utilisateur à bannir:');
+    if (username) {
+        const user = chatUsers.find(u => u.username === username);
+        if (user) {
+            user.isBanned = !user.isBanned;
+            saveData();
+            updateAdminPanel();
+            alert(`Utilisateur ${username} ${user.isBanned ? 'banni' : 'débanni'} !`);
+        } else {
+            alert('Utilisateur non trouvé !');
+        }
+    }
+}
+
+function viewAllMessages() {
+    if (!isAdmin) return;
+    alert(`Total des messages: ${chatMessages.length}\nDernier message: ${chatMessages.length > 0 ? chatMessages[chatMessages.length-1].text : 'Aucun'}`);
+}
+
+function clearChat() {
+    if (!isAdmin) return;
+    if (confirm('Voulez-vous vraiment effacer tout l\'historique du chat ?')) {
+        document.getElementById('chatMessages').innerHTML = '';
+        chatMessages = [];
+        saveData();
+        alert('Chat effacé !');
+    }
+}
+
+function exportLogs() {
+    if (!isAdmin) return;
+    const logs = chatMessages.map(msg => 
+        `[${msg.time.toLocaleString()}] ${msg.user}: ${msg.text}`
+    ).join('\n');
+    
+    const blob = new Blob([logs], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'chat_logs.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function saveSettings() {
+    if (!isAdmin) return;
+    chatSettings.name = document.getElementById('chatName').value;
+    chatSettings.description = document.getElementById('chatDescription').value;
+    saveData();
+    alert('Paramètres sauvegardés !');
+}
+
+function updateStats() {
+    if (!isAdmin) return;
+    const today = new Date().toDateString();
+    const todayMessages = chatMessages.filter(msg => 
+        msg.time.toDateString() === today
+    ).length;
+    
+    document.getElementById('statsOnline').textContent = `Utilisateurs en ligne: ${chatUsers.length}`;
+    document.getElementById('statsMessages').textContent = `Messages aujourd'hui: ${todayMessages}`;
+    document.getElementById('statsNewUsers').textContent = `Nouveaux utilisateurs: ${chatUsers.length}`;
+}
+
+function adminBroadcast() {
+    if (!isAdmin) return;
+    const message = prompt('Message global à envoyer:');
+    if (message) {
+        const messagesContainer = document.getElementById('chatMessages');
+        const now = new Date();
+        const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+        
+        const broadcastElement = document.createElement('div');
+        broadcastElement.className = 'message received';
+        broadcastElement.innerHTML = `
+            <div class="message-sender" style="color: #ff0000;">Système <span class="message-time">${timeString}</span></div>
+            <div class="message-text" style="color: #ff0000; font-weight: bold;">[ADMIN] ${message}</div>
+        `;
+        
+        messagesContainer.appendChild(broadcastElement);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        alert('Message global envoyé !');
+    }
+}
+
+function systemRestart() {
+    if (!isAdmin) return;
+    if (confirm('Redémarrer le système ? Cela effacera toutes les données.')) {
+        localStorage.clear();
+        chatUsers = [];
+        chatMessages = [];
+        alert('Système redémarré !');
+        location.reload();
+    }
+}
+
+// Sauvegarde des données CORRIGÉE
+function saveData() {
+    const data = {
+        users: chatUsers,
+        messages: chatMessages,
+        settings: chatSettings
+    };
+    localStorage.setItem('msnChatData', JSON.stringify(data));
+}
+
+function loadSavedData() {
+    const saved = localStorage.getItem('msnChatData');
+    const savedAdmin = localStorage.getItem('adminCredentials');
+    
+    if (saved) {
+        const data = JSON.parse(saved);
+        chatUsers = data.users || [];
+        chatMessages = data.messages || [];
+        chatSettings = data.settings || chatSettings;
+    }
+    
+    if (savedAdmin) {
+        ADMIN_CREDENTIALS = JSON.parse(savedAdmin);
+    }
+}
+
+// Gestion des émoticônes
+document.querySelectorAll('.emoticon').forEach(emoticon => {
+    emoticon.addEventListener('click', function() {
+        const input = document.getElementById('messageInput');
+        input.value += this.textContent + ' ';
+        input.focus();
+    });
+});
+
+// Simulation de statuts de contact
+setInterval(() => {
+    const contacts = document.querySelectorAll('.contact');
+    const randomContact = contacts[Math.floor(Math.random() * contacts.length)];
+    const statusIcon = randomContact.querySelector('.status-icon');
+    
+    const statuses = ['online', 'away', 'busy'];
+    const currentStatus = statusIcon.className.split(' ')[1];
+    let newStatus;
+    
+    do {
+        newStatus = statuses[Math.floor(Math.random() * statuses.length)];
+    } while (newStatus === currentStatus);
+    
+    statusIcon.className = 'status-icon ' + newStatus;
+}, 10000);
