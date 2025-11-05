@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSN Messenger 2004</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tahoma", "Arial", sans-serif;
+        }
+
+        body {
+            background: #0066cc;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .login-form {
+            width: 350px;
+            background-color: #ece9d8;
+            border: 2px solid #003399;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-header {
+            background: linear-gradient(to right, #0a246a, #a6caf0);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #aca899;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .gender-selection {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .gender-option {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #aca899;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            background: #f0f0f0;
+            font-size: 12px;
+        }
+
+        .gender-option.selected {
+            transform: scale(1.05);
+        }
+
+        .gender-option.male.selected {
+            background: #ff9900;
+            color: white;
+        }
+
+        .gender-option.female.selected {
+            background: #ff66cc;
+            color: white;
+        }
+
+        .color-selection {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .color-option {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .color-option.selected {
+            border-color: #003399;
+            transform: scale(1.2);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 8px;
+            background: linear-gradient(to bottom, #f0f0f0, #d4d0c8);
+            border: 1px solid #aca899;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .msn-container {
+            width: 95%;
+            height: 95%;
+            background-color: #ece9d8;
+            border: 2px solid #003399;
+            border-radius: 5px;
+            display: none;
+            flex-direction: column;
+        }
+
+        .title-bar {
+            background: linear-gradient(to right, #ff00ff, #00ffff, #ffff00, #ff00ff);
+            color: white;
+            padding: 5px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .contacts-panel {
+            width: 200px;
+            background-color: #ece9d8;
+            border-right: 1px solid #aca899;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+        }
+
+        .chat-header {
+            background: linear-gradient(to right, #0a246a, #a6caf0);
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: white;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            max-width: 80%;
+        }
+
+        .received {
+            background-color: #f0f0f0;
+        }
+
+        .sent {
+            background-color: #e1f5fe;
+            margin-left: auto;
+        }
+
+        .message-sender {
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .message-time {
+            font-size: 9px;
+            color: #666;
+            margin-left: 5px;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            background-color: #ece9d8;
+            border-top: 1px solid #aca899;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #aca899;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .send-btn {
+            background: linear-gradient(to bottom, #f0f0f0, #d4d0c8);
+            border: 1px solid #aca899;
+            padding: 8px 15px;
+            margin-left: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .control-btn {
+            width: 18px;
+            height: 18px;
+            margin-left: 5px;
+            background-color: #ece9d8;
+            border: 1px solid #003399;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .online {
+            background-color: #00cc00;
+        }
+
+        .contact {
+            padding: 5px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .contact:hover {
+            background-color: #d4d0c8;
+        }
+
+        .wizz-btn {
+            background: linear-gradient(to bottom, #ff9900, #ff6600);
+            border: 1px solid #cc6600;
+            padding: 8px 15px;
+            margin-left: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+        }
+
+        @keyframes wizz {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .wizz-active {
+            animation: wizz 0.2s linear 5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Formulaire de connexion -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-form">
+            <div class="login-header">MSN Messenger 2004</div>
+            <input type="text" class="login-input" id="usernameInput" placeholder="Pseudo" maxlength="10">
+            <input type="password" class="login-input" id="passwordInput" placeholder="Mot de passe">
+            
+            <div class="gender-selection">
+                <div class="gender-option male selected" data-gender="male">👨 Masculin</div>
+                <div class="gender-option female" data-gender="female">👩 Féminin</div>
+            </div>
+            
+            <div style="font-size: 11px; text-align: center; margin-bottom: 5px; color: #666;">
+                Couleur du texte:
+            </div>
+            <div class="color-selection">
+                <div class="color-option selected" style="background-color: #000000;" data-color="#000000"></div>
+                <div class="color-option" style="background-color: #ff0000;" data-color="#ff0000"></div>
+                <div class="color-option" style="background-color: #0066cc;" data-color="#0066cc"></div>
+                <div class="color-option" style="background-color: #008000;" data-color="#008000"></div>
+                <div class="color-option" style="background-color: #800080;" data-color="#800080"></div>
+            </div>
+            
+            <button class="login-btn" id="loginBtn">Se connecter</button>
+            <button class="login-btn" id="registerBtn" style="background: #4CAF50; color: white;">Créer un compte</button>
+        </div>
+    </div>
+
+    <!-- Interface MSN Messenger -->
+    <div class="msn-container" id="msnContainer">
+        <!-- Barre de titre multicolore -->
+        <div class="title-bar">
+            <div>MSN Messenger 2004</div>
+            <div class="window-controls">
+                <div class="control-btn">_</div>
+                <div class="control-btn">□</div>
+                <div class="control-btn" id="closeBtn">×</div>
+            </div>
+        </div>
+
+        <!-- Contenu principal -->
+        <div class="main-content">
+            <!-- Panneau des contacts -->
+            <div class="contacts-panel">
+                <div class="contact-group">
+                    <div class="group-title">En ligne (<span id="onlineCount">0</span>)</div>
+                    <div id="onlineUsers">
+                        <!-- Les utilisateurs en ligne apparaîtront ici -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone de chat -->
+            <div class="chat-area">
+                <div class="chat-header">
+                    <div>💬 Salon de Discussion MSN</div>
+                    <div class="window-controls">
+                        <div class="control-btn">_</div>
+                        <div class="control-btn">×</div>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message received">
+                        <div class="message-sender">Système</div>
+                        <div class="message-text">Bienvenue sur MSN Messenger 2004 ! Connectez-vous pour chatter.</div>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" class="input-field" id="messageInput" placeholder="Tapez votre message ici...">
+                    <button class="send-btn" id="sendBtn">Envoyer</button>
+                    <button class="wizz-btn" id="wizzBtn">Wizz!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURATION SUPABASE ====================
+        const SUPABASE_URL = 'https://yfzgwndptirumnmfgquq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlmemd3bmRwdGlydW1ubWZncXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNTU3NDcsImV4cCI6MjA3NzkzMTc0N30.5fvNXsBIYOHISHXz8HkWIF_mG1-N_GTCC1URiNqzmgk';
+
+        // Initialiser Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Variables globales
+        let currentUser = null;
+        let userGender = 'male';
+        let userTextColor = '#000000';
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gestion de la sélection du genre
+            document.querySelectorAll('.gender-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    userGender = this.getAttribute('data-gender');
+                    document.querySelectorAll('.gender-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                });
+            });
+
+            // Gestion de la sélection de couleur
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    userTextColor = this.getAttribute('data-color');
+                    document.querySelectorAll('.color-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                });
+            });
+
+            // Connexion
+            document.getElementById('loginBtn').addEventListener('click', login);
+            document.getElementById('registerBtn').addEventListener('click', register);
+            document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') login();
+            });
+
+            // Envoi de messages
+            document.getElementById('sendBtn').addEventListener('click', sendMessage);
+            document.getElementById('messageInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendMessage();
+            });
+
+            // Wizz
+            document.getElementById('wizzBtn').addEventListener('click', sendWizz);
+
+            // Fermeture
+            document.getElementById('closeBtn').addEventListener('click', logout);
+
+            // Charger les utilisateurs
+            loadOnlineUsers();
+        });
+
+        // Connexion
+        async function login() {
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            
+            if (!username) {
+                alert('Veuillez entrer un pseudo');
+                return;
+            }
+            
+            currentUser = {
+                username: username,
+                gender: userGender,
+                textColor: userTextColor
+            };
+            
+            await saveUserToSupabase();
+            showChatInterface();
+        }
+
+        // Inscription (identique à connexion pour l'instant)
+        async function register() {
+            await login();
+        }
+
+        // Sauvegarder l'utilisateur
+        async function saveUserToSupabase() {
+            if (!currentUser) return;
+            
+            const userData = {
+                username: currentUser.username,
+                gender: currentUser.gender,
+                textColor: userTextColor,
+                isOnline: true,
+                lastSeen: new Date().toISOString()
+            };
+            
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .upsert(userData, { onConflict: 'username' });
+                    
+                if (error) throw error;
+                console.log('Utilisateur connecté');
+            } catch (error) {
+                console.error('Erreur sauvegarde:', error);
+            }
+        }
+
+        // Déconnexion
+        async function logout() {
+            if (currentUser) {
+                try {
+                    await supabase
+                        .from('users')
+                        .update({
+                            isOnline: false,
+                            lastSeen: new Date().toISOString()
+                        })
+                        .eq('username', currentUser.username);
+                } catch (error) {
+                    console.error("Erreur déconnexion:", error);
+                }
+            }
+            
+            currentUser = null;
+            showLoginInterface();
+        }
+
+        // Afficher le chat
+        function showChatInterface() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('msnContainer').style.display = 'flex';
+            loadMessages();
+        }
+
+        // Afficher la connexion
+        function showLoginInterface() {
+            document.getElementById('msnContainer').style.display = 'none';
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('usernameInput').value = '';
+            document.getElementById('passwordInput').value = '';
+        }
+
+        // Charger les messages
+        async function loadMessages() {
+            try {
+                const { data: messages, error } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .order('timestamp', { ascending: true });
+                    
+                if (error) throw error;
+                
+                const messagesContainer = document.getElementById('chatMessages');
+                messagesContainer.innerHTML = '';
+                
+                messages.forEach(message => {
+                    addMessageToChat(message);
+                });
+            } catch (error) {
+                console.error('Erreur chargement messages:', error);
+            }
+            
+            // S'abonner aux nouveaux messages
+            supabase
+                .channel('messages')
+                .on('postgres_changes', 
+                    { event: 'INSERT', schema: 'public', table: 'messages' },
+                    (payload) => {
+                        addMessageToChat(payload.new);
+                    }
+                )
+                .subscribe();
+        }
+
+        // Ajouter un message au chat
+        function addMessageToChat(message) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageElement = document.createElement('div');
+            const isCurrentUser = message.username === currentUser.username;
+            messageElement.className = isCurrentUser ? 'message sent' : 'message received';
+            
+            const senderColor = message.gender === 'female' ? '#ff66cc' : '#ff9900';
+            const messageTime = message.timestamp ? formatTime(new Date(message.timestamp)) : '00:00';
+            
+            messageElement.innerHTML = `
+                <div class="message-sender" style="color: ${senderColor};">${message.username} <span class="message-time">${messageTime}</span></div>
+                <div class="message-text" style="color: ${message.textColor || '#000000'}">${message.text}</div>
+            `;
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Charger les utilisateurs en ligne
+        async function loadOnlineUsers() {
+            try {
+                const { data: users, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('isOnline', true);
+                    
+                if (error) throw error;
+                
+                const onlineContainer = document.getElementById('onlineUsers');
+                onlineContainer.innerHTML = '';
+                
+                let onlineCount = 0;
+                
+                users.forEach(user => {
+                    onlineCount++;
+                    const userElement = document.createElement('div');
+                    userElement.className = 'contact';
+                    const userColor = user.gender === 'female' ? '#ff66cc' : '#ff9900';
+                    
+                    userElement.innerHTML = `
+                        <div class="status-icon online"></div>
+                        <div style="color: ${userColor}">${user.username}</div>
+                    `;
+                    onlineContainer.appendChild(userElement);
+                });
+                
+                document.getElementById('onlineCount').textContent = onlineCount;
+            } catch (error) {
+                console.error('Erreur chargement utilisateurs:', error);
+            }
+            
+            // S'abonner aux changements
+            supabase
+                .channel('users')
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'users' },
+                    () => {
+                        loadOnlineUsers();
+                    }
+                )
+                .subscribe();
+        }
+
+        // Envoyer un message
+        async function sendMessage() {
+            if (!currentUser) return;
+            
+            const input = document.getElementById('messageInput');
+            const messageText = input.value.trim();
+            
+            if (messageText) {
+                try {
+                    const { data, error } = await supabase
+                        .from('messages')
+                        .insert({
+                            username: currentUser.username,
+                            text: messageText,
+                            gender: userGender,
+                            textColor: userTextColor,
+                            timestamp: new Date().toISOString()
+                        });
+                    
+                    if (error) throw error;
+                    input.value = '';
+                } catch (error) {
+                    console.error('Erreur envoi message:', error);
+                }
+            }
+        }
+
+        // Formater l'heure
+        function formatTime(date) {
+            return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        // Envoyer Wizz
+        async function sendWizz() {
+            if (!currentUser) return;
+            
+            document.getElementById('msnContainer').classList.add('wizz-active');
+            
+            try {
+                await supabase
+                    .from('messages')
+                    .insert({
+                        username: 'Système',
+                        text: `🌀 ${currentUser.username} a envoyé un Wizz !`,
+                        gender: 'male',
+                        timestamp: new Date().toISOString()
+                    });
+            } catch (error) {
+                console.error('Erreur Wizz:', error);
+            }
+            
+            setTimeout(() => {
+                document.getElementById('msnContainer').classList.remove('wizz-active');
+            }, 1000);
+        }
+
+        // Nettoyage à la fermeture
+        window.addEventListener('beforeunload', async function() {
+            if (currentUser) {
+                try {
+                    await supabase
+                        .from('users')
+                        .update({
+                            isOnline: false,
+                            lastSeen: new Date().toISOString()
+                        })
+                        .eq('username', currentUser.username);
+                } catch (error) {
+                    console.error("Erreur déconnexion auto:", error);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
