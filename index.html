@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSN Messenger 2004</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tahoma", "Arial", sans-serif;
+        }
+
+        body {
+            background: #0066cc;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .msn-container {
+            width: 95%;
+            height: 95%;
+            background-color: rgba(236, 233, 216, 0.95);
+            border: 2px solid #003399;
+            border-radius: 5px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .title-bar {
+            background: linear-gradient(to right, #ff00ff, #00ffff, #ffff00, #ff00ff);
+            color: white;
+            padding: 5px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+            border-bottom: 1px solid #003399;
+        }
+
+        .window-controls {
+            display: flex;
+        }
+
+        .control-btn {
+            width: 18px;
+            height: 18px;
+            margin-left: 5px;
+            background-color: #ece9d8;
+            border: 1px solid #003399;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .control-btn:hover {
+            background-color: #d4d0c8;
+        }
+
+        .menu-bar {
+            background: linear-gradient(to right, #ff00ff, #00ffff, #ffff00);
+            border-bottom: 1px solid #aca899;
+            padding: 3px 5px;
+            display: flex;
+            font-size: 11px;
+            height: 20px;
+        }
+
+        .menu-item {
+            margin-right: 15px;
+            cursor: pointer;
+            color: transparent;
+        }
+
+        .toolbar {
+            background: linear-gradient(to right, #ffff00, #ff00ff, #00ffff);
+            border-bottom: 1px solid #aca899;
+            padding: 5px 10px;
+            display: flex;
+            font-size: 11px;
+            flex-wrap: wrap;
+            height: 25px;
+        }
+
+        .tool-btn {
+            margin-right: 10px;
+            cursor: pointer;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: transparent;
+        }
+
+        .recipient-bar {
+            background-color: #ece9d8;
+            border-bottom: 1px solid #aca899;
+            padding: 5px 10px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+        }
+
+        .recipient-label {
+            margin-right: 5px;
+        }
+
+        .voice-clip {
+            display: flex;
+            align-items: center;
+            margin-left: 20px;
+            font-size: 11px;
+        }
+
+        .checkboxes {
+            display: flex;
+            margin-left: 20px;
+        }
+
+        .checkbox {
+            width: 15px;
+            height: 15px;
+            border: 1px solid #003399;
+            margin-right: 5px;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+        }
+
+        .checkbox.checked {
+            background-color: #0066cc;
+            color: white;
+        }
+
+        .action-buttons {
+            display: flex;
+            margin-left: auto;
+        }
+
+        .action-btn {
+            background: linear-gradient(to bottom, #f0f0f0, #d4d0c8);
+            border: 1px solid #aca899;
+            padding: 4px 10px;
+            margin-left: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(to bottom, #e0e0e0, #c4c0b8);
+        }
+
+        .footer {
+            background-color: #ece9d8;
+            border-top: 1px solid #aca899;
+            padding: 5px 10px;
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .contacts-panel {
+            width: 200px;
+            background-color: #ece9d8;
+            border-right: 1px solid #aca899;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .contact-group {
+            margin-bottom: 15px;
+        }
+
+        .group-title {
+            font-weight: bold;
+            font-size: 11px;
+            color: #003399;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .contact {
+            padding: 5px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .contact:hover {
+            background-color: #d4d0c8;
+        }
+
+        .status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .online {
+            background-color: #00cc00;
+        }
+
+        .away {
+            background-color: #ffcc00;
+        }
+
+        .busy {
+            background-color: #ff0000;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+        }
+
+        .chat-header {
+            background: linear-gradient(to right, #0a246a, #a6caf0);
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: white;
+            border-bottom: 1px solid #aca899;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 5px;
+            border-radius: 5px;
+            max-width: 80%;
+        }
+
+        .received {
+            background-color: #f0f0f0;
+            align-self: flex-start;
+        }
+
+        .sent {
+            background-color: #e1f5fe;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .message-sender {
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .message-time {
+            font-size: 9px;
+            color: #666;
+            margin-left: 5px;
+        }
+
+        .message-text {
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            background-color: #ece9d8;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #aca899;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .send-btn {
+            background: linear-gradient(to bottom, #f0f0f0, #d4d0c8);
+            border: 1px solid #aca899;
+            padding: 8px 15px;
+            margin-left: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .send-btn:hover {
+            background: linear-gradient(to bottom, #e0e0e0, #c4c0b8);
+        }
+
+        .wizz-btn {
+            background: linear-gradient(to bottom, #ff9900, #ff6600);
+            border: 1px solid #cc6600;
+            padding: 8px 15px;
+            margin-left: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .wizz-btn:hover {
+            background: linear-gradient(to bottom, #ff8800, #ff5500);
+        }
+
+        .emoticons-bar {
+            background-color: #ece9d8;
+            padding: 5px 10px;
+            display: flex;
+            border-top: 1px solid #aca899;
+        }
+
+        .emoticon {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .emoticon:hover {
+            background-color: #d4d0c8;
+            border-radius: 3px;
+        }
+
+        /* Page d'administration cachée */
+        .admin-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background-color: #ece9d8;
+            border-left: 2px solid #003399;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-panel.open {
+            right: 0;
+        }
+
+        .admin-header {
+            background: linear-gradient(to right, #0a246a, #a6caf0);
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .admin-section {
+            margin-bottom: 20px;
+            border: 1px solid #aca899;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: white;
+        }
+
+        .admin-section h3 {
+            color: #003399;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .admin-btn {
+            background: linear-gradient(to bottom, #f0f0f0, #d4d0c8);
+            border: 1px solid #aca899;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .admin-btn:hover {
+            background: linear-gradient(to bottom, #e0e0e0, #c4c0b8);
+        }
+
+        .admin-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #aca899;
+            border-radius: 3px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .admin-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #003399;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 20px;
+            z-index: 999;
+            display: none;
+        }
+
+        /* Formulaire d'inscription avec genre et choix de couleur */
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .login-form {
+            width: 350px;
+            background-color: #ece9d8;
+            border: 2px solid #003399;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-header {
+            background: linear-gradient(to right, #0a246a, #a6caf0);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #aca899;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        /* Sélection du genre */
+        .gender-selection {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .gender-option {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #aca899;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            background: #f0f0f0;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .gender-option.selected {
+            transform: scale(1.05);
+        }
+
+        .gender-option.male {
+            border-color: #ff9900;
+        }
+
+        .gender-option.male.selected {
+            background: #ff9900;
+            color: white;
+            border-color: #cc7700;
+        }
+
+        .gender-option.female {
+            border-color: #ff66cc;
+        }
+
+        .gender-option.female.selected {
+            background: #ff66cc;
+            color: white;
+            border-color: #cc55aa;
+        }
+
+        /* Sélection de couleur pour le texte */
+        .color-selection {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .color-option {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .color-option.selected {
+            border-color: #003399;
+            transform: scale(1.2);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 8px;
+            background: linear-gradient(to bottom, #f0f0f0, #d4d0c8);
+            border: 1px solid #aca899;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .login-btn:hover {
+            background: linear-gradient(to bottom, #e0e0e0, #c4c0b8);
+        }
+
+        /* Animation Wizz */
+        @keyframes wizz {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .wizz-active {
+            animation: wizz 0.2s linear 5;
+        }
+
+        .admin-badge {
+            background-color: #ff6600;
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 9px;
+            margin-left: 5px;
+        }
+
+        /* Boîte de dialogue mot de passe */
+        .password-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .password-form {
+            width: 300px;
+            background-color: #ece9d8;
+            border: 2px solid #003399;
+            border-radius: 5px;
+            padding: 20px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #aca899;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        .reset-btn {
+            background: linear-gradient(to bottom, #ff6666, #cc0000);
+            color: white;
+            border: 1px solid #cc0000;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .reset-btn:hover {
+            background: linear-gradient(to bottom, #ff5555, #bb0000);
+        }
+
+        .error-message {
+            color: red;
+            font-size: 11px;
+            margin-top: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Formulaire de connexion AMÉLIORÉ avec genre et couleur -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-form">
+            <div class="login-header">MSN Messenger 2004 - Connexion</div>
+            <input type="text" class="login-input" id="usernameInput" placeholder="Pseudo (max 10 caractères)" maxlength="10">
+            <div id="usernameError" class="error-message"></div>
+            <input type="email" class="login-input" id="emailInput" placeholder="Email (optionnel)">
+            <input type="password" class="login-input" id="passwordInput" placeholder="Mot de passe">
+            
+            <!-- Sélection du genre -->
+            <div class="gender-selection">
+                <div class="gender-option male selected" data-gender="male">
+                    👨 Masculin
+                </div>
+                <div class="gender-option female" data-gender="female">
+                    👩 Féminin
+                </div>
+            </div>
+            
+            <!-- Sélection de couleur pour le texte -->
+            <div style="font-size: 11px; text-align: center; margin-bottom: 5px; color: #666;">
+                Couleur de votre texte dans le chat:
+            </div>
+            <div class="color-selection">
+                <div class="color-option selected" style="background-color: #000000;" data-color="#000000"></div>
+                <div class="color-option" style="background-color: #ff0000;" data-color="#ff0000"></div>
+                <div class="color-option" style="background-color: #0066cc;" data-color="#0066cc"></div>
+                <div class="color-option" style="background-color: #008000;" data-color="#008000"></div>
+                <div class="color-option" style="background-color: #8b4513;" data-color="#8b4513"></div>
+                <div class="color-option" style="background-color: #800080;" data-color="#800080"></div>
+                <div class="color-option" style="background-color: #ff69b4;" data-color="#ff69b4"></div>
+                <div class="color-option" style="background-color: #ffa500;" data-color="#ffa500"></div>
+            </div>
+            
+            <button class="login-btn" id="loginBtn">Se connecter</button>
+            <button class="login-btn" id="registerBtn" style="margin-top: 5px; background: #4CAF50; color: white;">Créer un compte</button>
+            
+            <!-- Bouton de réinitialisation pour l'admin -->
+            <button class="reset-btn" id="resetBtn" style="display: none;">🔧 Réinitialiser les statuts en ligne</button>
+            
+            <div style="font-size: 10px; text-align: center; margin-top: 10px; color: #666;">
+                MOUN
+            </div>
+        </div>
+    </div>
+
+    <!-- Boîte dialogue mot de passe -->
+    <div class="password-dialog" id="passwordDialog">
+        <div class="password-form">
+            <div class="login-header">Changer le mot de passe admin</div>
+            <input type="password" class="password-input" id="newPasswordInput" placeholder="Nouveau mot de passe">
+            <div style="display: flex; gap: 10px;">
+                <button class="admin-btn" onclick="confirmPasswordChange()">Valider</button>
+                <button class="admin-btn" onclick="cancelPasswordChange()">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interface MSN Messenger -->
+    <div class="msn-container" id="msnContainer" style="display: none;">
+        <!-- Barre de titre multicolore -->
+        <div class="title-bar">
+            <div>MSN Messenger 2004 <span id="adminBadge" class="admin-badge" style="display: none;"></span></div>
+            <div class="window-controls">
+                <div class="control-btn">_</div>
+                <div class="control-btn">□</div>
+                <div class="control-btn" id="closeBtn">×</div>
+            </div>
+        </div>
+
+        <!-- Barre de menu multicolore (vierge) -->
+        <div class="menu-bar">
+            <div class="menu-item"></div>
+            <div class="menu-item"></div>
+            <div class="menu-item"></div>
+            <div class="menu-item"></div>
+            <div class="menu-item"></div>
+        </div>
+
+        <!-- Barre d'outils multicolore (vierge) -->
+        <div class="toolbar">
+            <div class="tool-btn"></div>
+            <div class="tool-btn"></div>
+            <div class="tool-btn"></div>
+            <div class="tool-btn"></div>
+            <div class="tool-btn"></div>
+            <div class="tool-btn"></div>
+        </div>
+
+        <!-- Barre de destinataire -->
+        <div class="recipient-bar">
+            <div class="recipient-label">To:</div>
+            <div>All Hail The Heartbreaker &lt;/3 &lt;glitter_gak@ho&gt;</div>
+            <div class="voice-clip">
+                <div class="checkbox"></div>
+                <div>Voice Clip</div>
+            </div>
+            <div class="checkboxes">
+                <div class="checkbox checked">x</div>
+                <div class="checkbox checked">x</div>
+                <div class="checkbox checked">x</div>
+                <div class="checkbox checked">x</div>
+                <div class="checkbox checked">x</div>
+            </div>
+            <div class="action-buttons">
+                <div class="action-btn">Send</div>
+                <div class="action-btn">Search</div>
+            </div>
+        </div>
+
+        <!-- Contenu principal -->
+        <div class="main-content">
+            <!-- Panneau des contacts - SUPPRIMÉ : section hors ligne -->
+            <div class="contacts-panel">
+                <div class="contact-group">
+                    <div class="group-title">En ligne (<span id="onlineCount">0</span>)</div>
+                    <div id="onlineUsers">
+                        <!-- Les utilisateurs en ligne apparaîtront ici -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone de chat -->
+            <div class="chat-area">
+                <div class="chat-header">
+                    <div>💬 Salon de Discussion MSN</div>
+                    <div class="window-controls">
+                        <div class="control-btn">_</div>
+                        <div class="control-btn">×</div>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message received">
+                        <div class="message-sender">Système <span class="message-time">14:30</span></div>
+                        <div class="message-text">Bienvenue sur MSN Messenger 2004 ! Connectez-vous pour chatter.</div>
+                    </div>
+                </div>
+                <div class="emoticons-bar">
+                    <div class="emoticon">:)</div>
+                    <div class="emoticon">:(</div>
+                    <div class="emoticon">:D</div>
+                    <div class="emoticon">;)</div>
+                    <div class="emoticon">:P</div>
+                    <div class="emoticon">:O</div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" class="input-field" id="messageInput" placeholder="Tapez votre message ici...">
+                    <button class="send-btn" id="sendBtn">Envoyer</button>
+                    <button class="wizz-btn" id="wizzBtn">Wizz!</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pied de page -->
+        <div class="footer">
+            Click for new Emoticons and Theme Packs from Blue Mountain
+        </div>
+    </div>
+
+    <!-- Panneau d'administration caché -->
+    <div class="admin-panel" id="adminPanel">
+        <div class="admin-header">
+            <div>Panel de Contrôle</div>
+            <div class="control-btn" id="closeAdmin">×</div>
+        </div>
+        <div class="admin-content">
+            <div class="admin-section">
+                <h3>Gestion des utilisateurs</h3>
+                <div id="usersList">
+                    <p>Chargement des utilisateurs...</p>
+                </div>
+                <input type="text" class="admin-input" id="banUsername" placeholder="Pseudo à bannir">
+                <button class="admin-btn" onclick="refreshUsers()">Actualiser</button>
+                <button class="admin-btn" onclick="banUser()">Bannir utilisateur</button>
+                <button class="admin-btn" onclick="changeAdminPassword()">Changer mot de passe</button>
+                <button class="admin-btn" style="background: #ff6666; color: white;" onclick="resetAllOnlineStatus()">🔄 Réinitialiser tous les statuts</button>
+            </div>
+            <div class="admin-section">
+                <h3>Gestion des messages</h3>
+                <button class="admin-btn" onclick="viewAllMessages()">Voir tous les messages</button>
+                <button class="admin-btn" onclick="clearChat()">Effacer le chat</button>
+                <button class="admin-btn" onclick="exportLogs()">Exporter les logs</button>
+            </div>
+            <div class="admin-section">
+                <h3>Paramètres du chat</h3>
+                <input type="text" class="admin-input" id="chatName" placeholder="Nom du chat">
+                <input type="text" class="admin-input" id="chatDescription" placeholder="Description">
+                <button class="admin-btn" onclick="saveSettings()">Sauvegarder</button>
+            </div>
+            <div class="admin-section">
+                <h3>Statistiques</h3>
+                <p id="statsOnline">Utilisateurs en ligne: 0</p>
+                <p id="statsMessages">Messages aujourd'hui: 0</p>
+                <p id="statsNewUsers">Nouveaux utilisateurs: 0</p>
+                <button class="admin-btn" onclick="updateStats()">Actualiser stats</button>
+            </div>
+            <div class="admin-section">
+                <h3>Actions</h3>
+                <button class="admin-btn" style="background: #ff6666; color: white;" onclick="adminBroadcast()">Message global</button>
+                <button class="admin-btn" style="background: #ff6666; color: white;" onclick="systemRestart()">Redémarrer système</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bouton pour ouvrir l'administration -->
+    <div class="admin-toggle" id="adminToggle">⚙</div>
+
+    <script>
+        // ==================== CONFIGURATION FIREBASE ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBj4YhiILIzeVwdHRhNKJfV-F_nV4_rOZU",
+            authDomain: "msn-messenger-chat-eb36d.firebaseapp.com",
+            projectId: "msn-messenger-chat-eb36d",
+            storageBucket: "msn-messenger-chat-eb36d.firebasestorage.app",
+            messagingSenderId: "964598370839",
+            appId: "1:964598370839:web:bb17248854ea42f7df4252"
+        };
+
+        // Initialiser Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Variables globales
+        let currentUser = null;
+        let userGender = 'male';
+        let userTextColor = '#000000'; // Couleur du texte par défaut
+        let audioContext = null;
+        let isAdmin = false;
+
+        // Comptes administrateurs - MODIFIÉ : seulement les comptes exacts
+        const ADMIN_ACCOUNTS = {
+            'admin': 'admin123',
+            'administrateur': 'admin123'
+        };
+
+        // Mots interdits dans les pseudos
+        const FORBIDDEN_WORDS = ['admin', 'administrateur', 'moderateur', 'moderator', 'mod', 'root'];
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gestion de la sélection du genre
+            document.querySelectorAll('.gender-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    userGender = this.getAttribute('data-gender');
+                    
+                    document.querySelectorAll('.gender-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                });
+            });
+
+            // Gestion de la sélection de couleur pour le texte
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    userTextColor = this.getAttribute('data-color');
+                    
+                    document.querySelectorAll('.color-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                });
+            });
+
+            // Validation du pseudo en temps réel
+            document.getElementById('usernameInput').addEventListener('input', function() {
+                validateUsername(this.value.trim());
+            });
+
+            // Gestion de la connexion
+            document.getElementById('loginBtn').addEventListener('click', login);
+            document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+
+            // Gestion de l'inscription
+            document.getElementById('registerBtn').addEventListener('click', register);
+
+            // Gestion de l'envoi de messages
+            document.getElementById('sendBtn').addEventListener('click', sendMessage);
+            document.getElementById('messageInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            // Gestion du Wizz
+            document.getElementById('wizzBtn').addEventListener('click', sendWizz);
+
+            // Gestion de l'administration
+            document.getElementById('adminToggle').addEventListener('click', function() {
+                document.getElementById('adminPanel').classList.add('open');
+                updateAdminPanel();
+            });
+
+            document.getElementById('closeAdmin').addEventListener('click', function() {
+                document.getElementById('adminPanel').classList.remove('open');
+            });
+
+            // Gestion de la fermeture
+            document.getElementById('closeBtn').addEventListener('click', function() {
+                logout();
+            });
+
+            // Afficher le bouton de réinitialisation pour admin
+            document.getElementById('usernameInput').addEventListener('input', function() {
+                const username = this.value.trim();
+                if (ADMIN_ACCOUNTS[username]) {
+                    document.getElementById('resetBtn').style.display = 'block';
+                } else {
+                    document.getElementById('resetBtn').style.display = 'none';
+                }
+            });
+
+            document.getElementById('resetBtn').addEventListener('click', function() {
+                if (confirm('Réinitialiser tous les statuts en ligne ? Cela marquera tous les utilisateurs comme hors ligne.')) {
+                    resetAllOnlineStatus();
+                }
+            });
+
+            // Charger les utilisateurs en ligne
+            loadOnlineUsers();
+            
+            // Démarrer le nettoyage périodique des utilisateurs inactifs
+            setInterval(cleanupInactiveUsers, 30 * 1000);
+            
+            // Réinitialiser les statuts au chargement
+            setTimeout(resetOldOnlineStatus, 2000);
+        });
+
+        // Fonction de validation du pseudo
+        function validateUsername(username) {
+            const errorElement = document.getElementById('usernameError');
+            
+            if (username.length === 0) {
+                errorElement.textContent = '';
+                return true;
+            }
+            
+            if (username.length > 10) {
+                errorElement.textContent = 'Le pseudo ne doit pas dépasser 10 caractères';
+                return false;
+            }
+            
+            // Vérifier les mots interdits
+            const lowerUsername = username.toLowerCase();
+            for (const word of FORBIDDEN_WORDS) {
+                if (lowerUsername.includes(word)) {
+                    errorElement.textContent = 'Le pseudo contient un mot interdit';
+                    return false;
+                }
+            }
+            
+            errorElement.textContent = '';
+            return true;
+        }
+
+        // Réinitialiser les anciens statuts en ligne
+        function resetOldOnlineStatus() {
+            const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+            
+            db.collection('users')
+                .where('isOnline', '==', true)
+                .where('lastSeen', '<', oneMinuteAgo)
+                .get()
+                .then((snapshot) => {
+                    const batch = db.batch();
+                    snapshot.forEach((doc) => {
+                        batch.update(doc.ref, {
+                            isOnline: false
+                        });
+                    });
+                    return batch.commit();
+                })
+                .then(() => {
+                    console.log('Anciens statuts en ligne réinitialisés');
+                })
+                .catch((error) => {
+                    console.error('Erreur lors de la réinitialisation:', error);
+                });
+        }
+
+        // Réinitialiser tous les statuts en ligne (pour admin)
+        function resetAllOnlineStatus() {
+            db.collection('users')
+                .where('isOnline', '==', true)
+                .get()
+                .then((snapshot) => {
+                    const batch = db.batch();
+                    snapshot.forEach((doc) => {
+                        if (currentUser && doc.id !== currentUser.username) {
+                            batch.update(doc.ref, {
+                                isOnline: false,
+                                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
+                    });
+                    return batch.commit();
+                })
+                .then(() => {
+                    alert('✅ Tous les statuts en ligne ont été réinitialisés !');
+                    loadOnlineUsers();
+                })
+                .catch((error) => {
+                    console.error('Erreur lors de la réinitialisation totale:', error);
+                    alert('❌ Erreur lors de la réinitialisation');
+                });
+        }
+
+        // Connexion
+        function login() {
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            
+            if (!username || !password) {
+                alert('Veuillez entrer un pseudo et un mot de passe');
+                return;
+            }
+            
+            if (!validateUsername(username)) {
+                return;
+            }
+            
+            // Vérifier si c'est un compte admin exact
+            let isAdminAccount = false;
+            if (ADMIN_ACCOUNTS[username] && ADMIN_ACCOUNTS[username] === password) {
+                isAdminAccount = true;
+            }
+            
+            if (isAdminAccount) {
+                isAdmin = true;
+                currentUser = {
+                    username: username,
+                    email: username + '@msn.com',
+                    gender: userGender,
+                    textColor: userTextColor
+                };
+            } else {
+                isAdmin = false;
+                currentUser = {
+                    username: username,
+                    email: username + '@msn.com', 
+                    gender: userGender,
+                    textColor: userTextColor
+                };
+            }
+            
+            saveUserToFirebase();
+            showChatInterface();
+        }
+
+        // Inscription
+        function register() {
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            
+            if (!username || !password) {
+                alert('Veuillez entrer un pseudo et un mot de passe');
+                return;
+            }
+            
+            if (!validateUsername(username)) {
+                return;
+            }
+            
+            // Vérifier les comptes admin exacts
+            if (ADMIN_ACCOUNTS[username]) {
+                alert('Ce pseudo est réservé');
+                return;
+            }
+            
+            currentUser = {
+                username: username,
+                email: username + '@msn.com',
+                gender: userGender,
+                textColor: userTextColor
+            };
+            isAdmin = false;
+            
+            saveUserToFirebase();
+            showChatInterface();
+        }
+
+        // Sauvegarder l'utilisateur dans Firebase
+        function saveUserToFirebase() {
+            if (!currentUser) return;
+            
+            const userData = {
+                username: currentUser.username,
+                email: currentUser.email,
+                gender: currentUser.gender,
+                textColor: userTextColor,
+                isOnline: true,
+                lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                isAdmin: isAdmin,
+                isBanned: false
+            };
+            
+            db.collection('users').doc(currentUser.username).set(userData, { merge: true });
+        }
+
+        // Déconnexion
+        function logout() {
+            if (currentUser) {
+                db.collection('users').doc(currentUser.username).update({
+                    isOnline: false,
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                }).catch((error) => {
+                    console.error("Erreur lors de la déconnexion:", error);
+                });
+            }
+            
+            currentUser = null;
+            isAdmin = false;
+            showLoginInterface();
+        }
+
+        // Afficher l'interface de chat
+        function showChatInterface() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('msnContainer').style.display = 'flex';
+            
+            if (isAdmin) {
+                document.getElementById('adminToggle').style.display = 'flex';
+                document.getElementById('adminBadge').style.display = 'inline';
+                document.getElementById('adminBadge').textContent = 'ADMIN';
+            } else {
+                document.getElementById('adminToggle').style.display = 'none';
+                document.getElementById('adminBadge').style.display = 'none';
+            }
+            
+            // Message de bienvenue
+            const messagesContainer = document.getElementById('chatMessages');
+            const now = new Date();
+            const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            const genderColor = userGender === 'male' ? '#ff9900' : '#ff66cc';
+            const genderText = userGender === 'male' ? 'masculin' : 'féminin';
+            
+            const welcomeElement = document.createElement('div');
+            welcomeElement.className = 'message received';
+            welcomeElement.innerHTML = `
+                <div class="message-sender">Système <span class="message-time">${timeString}</span></div>
+                <div class="message-text">Bienvenue <strong style="color: ${genderColor}">${currentUser.username}</strong> ! Votre couleur <span style="color: ${genderColor}">${genderText}</span> est activée. ${isAdmin ? 'Vous êtes administrateur.' : ''}</div>
+            `;
+            
+            messagesContainer.appendChild(welcomeElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            loadMessages();
+        }
+
+        // Afficher l'interface de connexion
+        function showLoginInterface() {
+            document.getElementById('msnContainer').style.display = 'none';
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('usernameInput').value = '';
+            document.getElementById('passwordInput').value = '';
+        }
+
+        // Charger les messages depuis Firestore
+        function loadMessages() {
+            db.collection('messages')
+                .orderBy('timestamp', 'asc')
+                .onSnapshot((snapshot) => {
+                    const messagesContainer = document.getElementById('chatMessages');
+                    messagesContainer.innerHTML = '';
+                    
+                    snapshot.forEach((doc) => {
+                        const message = doc.data();
+                        const messageElement = document.createElement('div');
+                        const isCurrentUser = message.username === currentUser.username;
+                        messageElement.className = isCurrentUser ? 'message sent' : 'message received';
+                        
+                        // Couleur du pseudo selon le genre
+                        const senderColor = message.gender === 'female' ? '#ff66cc' : '#ff9900';
+                        
+                        messageElement.innerHTML = `
+                            <div class="message-sender" style="color: ${senderColor};">${message.username} ${message.isAdmin ? '<span style="color: #ff0000;">[ADMIN]</span>' : ''} <span class="message-time">${formatTime(message.timestamp?.toDate())}</span></div>
+                            <div class="message-text" style="color: ${message.textColor || '#000000'}">${message.text}</div>
+                        `;
+                        messagesContainer.appendChild(messageElement);
+                    });
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                });
+        }
+
+        // Charger uniquement les utilisateurs en ligne réels
+        function loadOnlineUsers() {
+            db.collection('users')
+                .where('isBanned', '==', false)
+                .onSnapshot((snapshot) => {
+                    const onlineContainer = document.getElementById('onlineUsers');
+                    
+                    onlineContainer.innerHTML = '';
+                    
+                    let onlineCount = 0;
+                    
+                    snapshot.forEach((doc) => {
+                        const user = doc.data();
+                        const isReallyOnline = user.isOnline && 
+                            user.lastSeen && 
+                            (new Date() - user.lastSeen.toDate()) < 2 * 60 * 1000;
+                        
+                        if (isReallyOnline) {
+                            onlineCount++;
+                            const userElement = document.createElement('div');
+                            userElement.className = 'contact';
+                            
+                            // Couleur du pseudo selon le genre
+                            const userColor = user.gender === 'female' ? '#ff66cc' : '#ff9900';
+                            
+                            userElement.innerHTML = `
+                                <div class="status-icon online"></div>
+                                <div style="color: ${userColor}">${user.username} ${user.isAdmin ? '<span style="color: #ff0000; font-size: 9px;">[ADMIN]</span>' : ''}</div>
+                            `;
+                            onlineContainer.appendChild(userElement);
+                        } else {
+                            if (user.isOnline) {
+                                db.collection('users').doc(user.username).update({
+                                    isOnline: false
+                                });
+                            }
+                        }
+                    });
+                    
+                    document.getElementById('onlineCount').textContent = onlineCount;
+                });
+        }
+
+        // Nettoyer les utilisateurs inactifs
+        function cleanupInactiveUsers() {
+            const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+            
+            db.collection('users')
+                .where('isOnline', '==', true)
+                .where('lastSeen', '<', twoMinutesAgo)
+                .get()
+                .then((snapshot) => {
+                    const batch = db.batch();
+                    snapshot.forEach((doc) => {
+                        batch.update(doc.ref, {
+                            isOnline: false
+                        });
+                    });
+                    return batch.commit();
+                })
+                .then(() => {
+                    console.log('Nettoyage des utilisateurs inactifs terminé');
+                })
+                .catch((error) => {
+                    console.error('Erreur lors du nettoyage:', error);
+                });
+        }
+
+        // Envoyer un message
+        function sendMessage() {
+            if (!currentUser) return;
+            
+            const input = document.getElementById('messageInput');
+            const messageText = input.value.trim();
+            
+            if (messageText) {
+                db.collection('messages').add({
+                    username: currentUser.username,
+                    text: messageText,
+                    gender: userGender,
+                    textColor: userTextColor,
+                    isAdmin: isAdmin,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                input.value = '';
+            }
+        }
+
+        // Fonction pour formater l'heure
+        function formatTime(date) {
+            if (!date) return '00:00';
+            return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        function sendWizz() {
+            if (!currentUser) return;
+            
+            document.getElementById('msnContainer').classList.add('wizz-active');
+            playWizzSound();
+            
+            db.collection('messages').add({
+                username: 'Système',
+                text: `🌀 ${currentUser.username} a envoyé un Wizz !`,
+                gender: 'male',
+                textColor: userTextColor,
+                isAdmin: false,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            setTimeout(() => {
+                document.getElementById('msnContainer').classList.remove('wizz-active');
+            }, 1000);
+        }
+
+        function playWizzSound() {
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.5);
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (e) {
+                console.log("L'API Audio n'est pas supportée");
+            }
+        }
+
+        // FONCTIONS D'ADMINISTRATION
+        function updateAdminPanel() {
+            if (!isAdmin) return;
+            
+            const usersList = document.getElementById('usersList');
+            usersList.innerHTML = '<h4>Utilisateurs enregistrés:</h4>';
+            
+            db.collection('users').get().then((snapshot) => {
+                if (snapshot.empty) {
+                    usersList.innerHTML += '<p>Aucun utilisateur enregistré</p>';
+                } else {
+                    snapshot.forEach((doc) => {
+                        const user = doc.data();
+                        const userColor = user.gender === 'female' ? '#ff66cc' : '#ff9900';
+                        const isReallyOnline = user.isOnline && 
+                            user.lastSeen && 
+                            (new Date() - user.lastSeen.toDate()) < 2 * 60 * 1000;
+                        
+                        usersList.innerHTML += `
+                            <div style="font-size: 11px; margin: 2px 0; padding: 2px; background: #f0f0f0; border-radius: 3px;">
+                                <span style="color: ${userColor}">${user.username}</span> - ${user.gender} 
+                                ${user.isAdmin ? '<span style="color: red;">[ADMIN]</span>' : ''} 
+                                ${user.isBanned ? '<span style="color: red;">[BANNI]</span>' : ''}
+                                - ${isReallyOnline ? '<span style="color: green;">En ligne</span>' : '<span style="color: gray;">Hors ligne</span>'}
+                            </div>
+                        `;
+                    });
+                }
+            });
+            
+            updateStats();
+        }
+
+        function refreshUsers() {
+            if (!isAdmin) return;
+            updateAdminPanel();
+            alert('Liste des utilisateurs actualisée !');
+        }
+
+        // FONCTION BANISSEMENT AMÉLIORÉE
+        function banUser() {
+            if (!isAdmin) return;
+            const username = document.getElementById('banUsername').value.trim();
+            
+            if (!username) {
+                alert('Veuillez entrer un pseudo à bannir');
+                return;
+            }
+            
+            if (username === currentUser.username) {
+                alert('Vous ne pouvez pas vous bannir vous-même !');
+                return;
+            }
+            
+            if (confirm(`Êtes-vous sûr de vouloir bannir ${username} ? Cette action est irréversible.`)) {
+                // Marquer l'utilisateur comme banni
+                db.collection('users').doc(username).update({
+                    isBanned: true,
+                    isOnline: false,
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    // Supprimer tous les messages de l'utilisateur banni
+                    db.collection('messages')
+                        .where('username', '==', username)
+                        .get()
+                        .then((snapshot) => {
+                            const batch = db.batch();
+                            snapshot.forEach((doc) => {
+                                batch.delete(doc.ref);
+                            });
+                            return batch.commit();
+                        })
+                        .then(() => {
+                            alert(`✅ ${username} a été banni et tous ses messages ont été supprimés !`);
+                            document.getElementById('banUsername').value = '';
+                            loadOnlineUsers();
+                            updateAdminPanel();
+                        })
+                        .catch((error) => {
+                            console.error('Erreur lors de la suppression des messages:', error);
+                            alert(`✅ ${username} a été banni mais erreur lors de la suppression des messages`);
+                        });
+                }).catch((error) => {
+                    console.error('Erreur lors du bannissement:', error);
+                    alert('❌ Erreur lors du bannissement');
+                });
+            }
+        }
+
+        function changeAdminPassword() {
+            if (!isAdmin) return;
+            
+            document.getElementById('passwordDialog').style.display = 'flex';
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('newPasswordInput').focus();
+        }
+
+        function confirmPasswordChange() {
+            const newPassword = document.getElementById('newPasswordInput').value;
+            
+            if (newPassword && newPassword.length >= 4) {
+                alert('✅ Mot de passe admin changé avec succès !');
+                document.getElementById('passwordDialog').style.display = 'none';
+            } else if (newPassword) {
+                alert('❌ Le mot de passe doit faire au moins 4 caractères');
+            } else {
+                document.getElementById('passwordDialog').style.display = 'none';
+            }
+        }
+
+        function cancelPasswordChange() {
+            document.getElementById('passwordDialog').style.display = 'none';
+        }
+
+        function viewAllMessages() {
+            if (!isAdmin) return;
+            db.collection('messages').get().then((snapshot) => {
+                alert(`Total des messages: ${snapshot.size}`);
+            });
+        }
+
+        function clearChat() {
+            if (!isAdmin) return;
+            if (confirm('Voulez-vous vraiment effacer tout l\'historique du chat ?')) {
+                db.collection('messages').get().then((snapshot) => {
+                    const batch = db.batch();
+                    snapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    return batch.commit();
+                }).then(() => {
+                    alert('Chat effacé !');
+                });
+            }
+        }
+
+        function exportLogs() {
+            if (!isAdmin) return;
+            db.collection('messages').get().then((snapshot) => {
+                const logs = [];
+                snapshot.forEach((doc) => {
+                    const message = doc.data();
+                    logs.push(`[${message.timestamp?.toDate().toLocaleString()}] ${message.username}: ${message.text}`);
+                });
+                
+                const blob = new Blob([logs.join('\n')], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'chat_logs.txt';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        function saveSettings() {
+            if (!isAdmin) return;
+            alert('Paramètres sauvegardés !');
+        }
+
+        function updateStats() {
+            if (!isAdmin) return;
+            db.collection('messages')
+                .where('timestamp', '>=', new Date(new Date().setHours(0,0,0,0)))
+                .get()
+                .then((snapshot) => {
+                    document.getElementById('statsMessages').textContent = `Messages aujourd'hui: ${snapshot.size}`;
+                });
+            
+            db.collection('users').get().then((snapshot) => {
+                document.getElementById('statsOnline').textContent = `Utilisateurs enregistrés: ${snapshot.size}`;
+            });
+        }
+
+        function adminBroadcast() {
+            if (!isAdmin) return;
+            const message = prompt('Message global à envoyer:');
+            if (message) {
+                db.collection('messages').add({
+                    username: 'Système',
+                    text: `📢 ${message}`,
+                    gender: 'male',
+                    textColor: '#000000',
+                    isAdmin: true,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert('Message global envoyé !');
+            }
+        }
+
+        function systemRestart() {
+            if (!isAdmin) return;
+            if (confirm('Redémarrer le système ? Cela effacera tous les messages.')) {
+                db.collection('messages').get().then((snapshot) => {
+                    const batch = db.batch();
+                    snapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    return batch.commit();
+                }).then(() => {
+                    alert('Système redémarré !');
+                });
+            }
+        }
+
+        // Gestion des émoticônes
+        document.querySelectorAll('.emoticon').forEach(emoticon => {
+            emoticon.addEventListener('click', function() {
+                const input = document.getElementById('messageInput');
+                input.value += this.textContent + ' ';
+                input.focus();
+            });
+        });
+
+        // Nettoyage à la fermeture
+        window.addEventListener('beforeunload', function() {
+            if (currentUser) {
+                db.collection('users').doc(currentUser.username).update({
+                    isOnline: false,
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                }).catch((error) => {
+                    console.error("Erreur lors de la déconnexion automatique:", error);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
